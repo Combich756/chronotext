@@ -6,13 +6,20 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from collections import Counter
-from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    ConfusionMatrixDisplay,
+)
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 TEXTS_DIR = BASE_DIR / "data"
 METADATA_PATH = TEXTS_DIR / "metadata.csv"
-
+REPORTS_DIR = BASE_DIR / "reports"
+REPORTS_DIR.mkdir(exist_ok=True)
 
 def load_dataset(data_dir, metadata_path):
     texts = []
@@ -76,12 +83,44 @@ clf = LogisticRegression(max_iter=1000)
 clf.fit(X_train, y_train)
 
 y_pred = clf.predict(X_test)
-print("Confusion matrix:")
-print(confusion_matrix(
+labels = [1600, 1700, 1800, 1900]
+
+cm = confusion_matrix(
     y_test,
     y_pred,
-    labels=[1600, 1700, 1800, 1900]
-))
+    labels=labels
+)
+
+print("Confusion matrix:")
+print(cm)
+
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=cm,
+    display_labels=labels
+)
+
+fig, ax = plt.subplots(figsize=(7, 6))
+
+disp.plot(
+    ax=ax,
+    values_format="d"
+)
+
+ax.set_title("ChronoText Baseline Confusion Matrix")
+
+fig.tight_layout()
+
+output_path = REPORTS_DIR / "confusion_matrix.png"
+
+fig.savefig(
+    output_path,
+    dpi=200,
+    bbox_inches="tight"
+)
+
+plt.close(fig)
+
+print(f"Confusion matrix saved to: {output_path}")
 
 print(
     classification_report(
