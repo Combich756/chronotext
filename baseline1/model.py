@@ -88,6 +88,7 @@ def create_pipeline():
         ),
     ])
 
+
 def print_top_features(model, top_n=20):
     tfidf = model.named_steps["tfidf"]
     classifier = model.named_steps["classifier"]
@@ -115,12 +116,70 @@ def print_top_features(model, top_n=20):
 
         for feature, weight in zip(
             top_features,
-            top_weights
+            top_weights,
         ):
             print(
                 f"    {feature:<20} "
                 f"{weight:.4f}"
             )
+
+
+def evaluate_cv(model, texts, labels):
+    cv = StratifiedKFold(
+        n_splits=5,
+        shuffle=True,
+        random_state=42,
+    )
+
+    scores = cross_validate(
+        estimator=model,
+        X=texts,
+        y=labels,
+        cv=cv,
+        scoring={
+            "accuracy": "accuracy",
+            "macro_f1": "f1_macro",
+            "weighted_f1": "f1_weighted",
+        },
+        n_jobs=1,
+    )
+
+    accuracy = scores["test_accuracy"]
+    macro_f1 = scores["test_macro_f1"]
+    weighted_f1 = scores["test_weighted_f1"]
+
+    print("=== 5-fold cross-validation ===")
+
+    print("Accuracy per fold:")
+    print(accuracy)
+
+    print("Macro F1 per fold:")
+    print(macro_f1)
+
+    print("Weighted F1 per fold:")
+    print(weighted_f1)
+
+    print()
+
+    print(
+        f"Accuracy: "
+        f"{accuracy.mean():.3f} ± "
+        f"{accuracy.std():.3f}"
+    )
+
+    print(
+        f"Macro F1: "
+        f"{macro_f1.mean():.3f} ± "
+        f"{macro_f1.std():.3f}"
+    )
+
+    print(
+        f"Weighted F1: "
+        f"{weighted_f1.mean():.3f} ± "
+        f"{weighted_f1.std():.3f}"
+    )
+
+
 texts, labels = load_dataset(
     TEXTS_DIR,
     METADATA_PATH,
@@ -146,16 +205,29 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 model = create_pipeline()
 
-model.fit(X_train, y_train)
+model.fit(
+    X_train,
+    y_train,
+)
 
 y_pred = model.predict(X_test)
 
+
+# =========================================================
+# FEATURE INSPECTION
+# =========================================================
+
 print_top_features(
     model,
-    top_n=20
+    top_n=20,
 )
 
 print()
+
+
+# =========================================================
+# FIXED SPLIT METRICS
+# =========================================================
 
 print("=== Fixed train/test split ===")
 print(f"Train size: {len(X_train)}")
@@ -191,7 +263,9 @@ disp = ConfusionMatrixDisplay(
     display_labels=LABELS,
 )
 
-fig, ax = plt.subplots(figsize=(7, 6))
+fig, ax = plt.subplots(
+    figsize=(7, 6)
+)
 
 disp.plot(
     ax=ax,
@@ -220,6 +294,7 @@ print(
     f"Confusion matrix saved to: "
     f"{confusion_matrix_path}"
 )
+
 print()
 
 
@@ -227,61 +302,8 @@ print()
 # 2. 5-FOLD CROSS-VALIDATION
 # =========================================================
 
-print("=== 5-fold cross-validation ===")
-
-cv = StratifiedKFold(
-    n_splits=5,
-    shuffle=True,
-    random_state=42,
-)
-
-cv_model = create_pipeline()
-
-scores = cross_validate(
-    estimator=cv_model,
-    X=texts,
-    y=labels,
-    cv=cv,
-    scoring={
-        "accuracy": "accuracy",
-        "macro_f1": "f1_macro",
-        "weighted_f1": "f1_weighted",
-    },
-    n_jobs=1,
-)
-
-
-accuracy_scores = scores["test_accuracy"]
-macro_f1_scores = scores["test_macro_f1"]
-weighted_f1_scores = scores["test_weighted_f1"]
-
-
-print("Accuracy per fold:")
-print(accuracy_scores)
-
-print("Macro F1 per fold:")
-print(macro_f1_scores)
-
-print("Weighted F1 per fold:")
-print(weighted_f1_scores)
-
-print()
-
-
-print(
-    "Accuracy: "
-    f"{accuracy_scores.mean():.3f} "
-    f"± {accuracy_scores.std():.3f}"
-)
-
-print(
-    "Macro F1: "
-    f"{macro_f1_scores.mean():.3f} "
-    f"± {macro_f1_scores.std():.3f}"
-)
-
-print(
-    "Weighted F1: "
-    f"{weighted_f1_scores.mean():.3f} "
-    f"± {weighted_f1_scores.std():.3f}"
+evaluate_cv(
+    model=create_pipeline(),
+    texts=texts,
+    labels=labels,
 )
