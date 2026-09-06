@@ -46,18 +46,35 @@ BOOKS = [
         "start": "CHAPTER 1. Amory, Son of Beatrice",
         "occurrence": 2,
     },
+    {
+        "input": "little_dorrit.txt",
+        "output": "little_dorrit_1800.txt",
+        "start": "CHAPTER 1. Sun and Shadow",
+        "occurrence": 1,
+    },
+    {
+        "input": "dombey_and_son.txt",
+        "output": "dombey_and_son_1800.txt",
+        "start": "CHAPTER I.\nDombey and Son",
+        "occurrence": 1,
+        "end": "PREFACE OF 1848",
+    },
+    {
+    "input": "the_warden.txt",
+    "output": "the_warden_1800.txt",
+    "start": "Chapter I\n\nHIRAM'S HOSPITAL",
+    "occurrence": 1,
+},
+{
+    "input": "greenmantle.txt",
+    "output": "greenmantle_1900.txt",
+    "start": "CHAPTER I.\nA Mission is Proposed",
+    "occurrence": 1,
+},
 ]
 
 
 def find_nth(text, marker, occurrence, start_pos=0):
-    """
-    Возвращает позицию occurrence-го вхождения marker в text,
-    начиная поиск с start_pos.
-
-    Например occurrence=2 означает:
-    найти второе вхождение marker.
-    """
-
     position = start_pos
 
     for _ in range(occurrence):
@@ -86,8 +103,7 @@ def clean_book(book):
 
     if gutenberg_start == -1:
         raise ValueError(
-            f"Gutenberg start marker not found: "
-            f"{book['input']}"
+            f"Gutenberg start marker not found: {book['input']}"
         )
 
     start = find_nth(
@@ -100,20 +116,24 @@ def clean_book(book):
     if start == -1:
         raise ValueError(
             f"Could not find occurrence "
-            f"{book['occurrence']} of marker "
-            f"{book['start']!r} "
-            f"in {book['input']}"
+            f"{book['occurrence']} of "
+            f"{book['start']!r} in {book['input']}"
         )
 
-    end = text.find(
+    end_marker = book.get(
+        "end",
         END_GUTENBERG,
-        start
+    )
+
+    end = text.find(
+        end_marker,
+        start + len(book["start"]),
     )
 
     if end == -1:
         raise ValueError(
-            f"Gutenberg end marker not found: "
-            f"{book['input']}"
+            f"End marker {end_marker!r} "
+            f"not found in {book['input']}"
         )
 
     if start >= end:
@@ -126,13 +146,12 @@ def clean_book(book):
     if len(clean_text) < 10_000:
         raise ValueError(
             f"Cleaned text is suspiciously short: "
-            f"{book['input']} -> "
-            f"{len(clean_text)} chars"
+            f"{book['input']} -> {len(clean_text)} chars"
         )
 
     output_path.write_text(
         clean_text,
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     print(

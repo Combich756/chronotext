@@ -88,7 +88,39 @@ def create_pipeline():
         ),
     ])
 
+def print_top_features(model, top_n=20):
+    tfidf = model.named_steps["tfidf"]
+    classifier = model.named_steps["classifier"]
 
+    feature_names = np.array(
+        tfidf.get_feature_names_out()
+    )
+
+    print("=== Most characteristic features ===")
+
+    for class_index, class_label in enumerate(
+        classifier.classes_
+    ):
+        coefficients = classifier.coef_[class_index]
+
+        top_indices = np.argsort(
+            coefficients
+        )[-top_n:][::-1]
+
+        top_features = feature_names[top_indices]
+        top_weights = coefficients[top_indices]
+
+        print()
+        print(f"Class {class_label}:")
+
+        for feature, weight in zip(
+            top_features,
+            top_weights
+        ):
+            print(
+                f"    {feature:<20} "
+                f"{weight:.4f}"
+            )
 texts, labels = load_dataset(
     TEXTS_DIR,
     METADATA_PATH,
@@ -118,6 +150,12 @@ model.fit(X_train, y_train)
 
 y_pred = model.predict(X_test)
 
+print_top_features(
+    model,
+    top_n=20
+)
+
+print()
 
 print("=== Fixed train/test split ===")
 print(f"Train size: {len(X_train)}")

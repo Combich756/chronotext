@@ -15,6 +15,10 @@ BOOKS = {
     "the_phoenix_and_the_carpet.txt": 836,
     "the_small_house_at_allington.txt": 4599,
     "this_side_of_paradise.txt": 805,
+    "little_dorrit.txt": 963,
+    "dombey_and_son.txt": 821,
+    "the_warden.txt": 619,
+    "greenmantle.txt": 559,
 }
 
 
