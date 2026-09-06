@@ -182,15 +182,7 @@ random_state=42
 
 ### Confusion matrix
 
-```text
-                Predicted
-           1600 1700 1800 1900
-
-True 1600     6    0    0    0
-True 1700     1    0    5    0
-True 1800     0    0    9    0
-True 1900     0    0    5    0
-```
+![Baseline confusion matrix](reports/confusion_matrix.png)
 
 Модель уверенно распознаёт классы `1600` и `1800`, но практически не предсказывает `1700` и `1900`.
 
