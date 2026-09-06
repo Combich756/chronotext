@@ -106,7 +106,7 @@ Warnings: 0
 
 ```text
 chronotext/
-├── baseline1/
+├── src/
 │   └── model.py
 │
 ├── data/
@@ -320,7 +320,7 @@ pip install scikit-learn
 ## Запуск baseline
 
 ```bash
-python baseline1/model.py
+python src/model.py
 ```
 
 ## Проверка датасета
