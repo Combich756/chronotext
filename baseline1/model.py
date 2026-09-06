@@ -1,47 +1,56 @@
 from pathlib import Path
+import csv
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from collections import Counter
+from sklearn.metrics import classification_report, confusion_matrix
 
 
-# model.py лежит в project/model/
-# texts лежит в project/texts/
 BASE_DIR = Path(__file__).resolve().parents[1]
 TEXTS_DIR = BASE_DIR / "data"
+METADATA_PATH = TEXTS_DIR / "metadata.csv"
 
 
-def load_texts_from_folder(folder_path):
+def load_dataset(data_dir, metadata_path):
     texts = []
     labels = []
 
-    for file_path in folder_path.glob("*.txt"):
-        raw_text = file_path.read_text(encoding="utf-8").strip()
+    with metadata_path.open("r", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
 
-        if not raw_text:
-            continue
+        for row in reader:
+            filename = row["filename"]
+            label = int(row["label"])
 
-        lines = raw_text.splitlines()
+            file_path = data_dir / filename
 
-        if len(lines) < 2:
-            continue
+            if not file_path.exists():
+                raise FileNotFoundError(
+                    f"File from metadata not found: {filename}"
+                )
 
-        date = lines[0].strip()
-        text = "\n".join(lines[1:]).strip()
+            text = file_path.read_text(encoding="utf-8").strip()
 
-        if not text:
-            continue
+            if not text:
+                raise ValueError(
+                    f"Empty text file: {filename}"
+                )
 
-        labels.append(date)
-        texts.append(text)
+            texts.append(text)
+            labels.append(label)
 
     return texts, labels
 
 
-train_texts, train_y = load_texts_from_folder(TEXTS_DIR)
+train_texts, train_y = load_dataset(
+    TEXTS_DIR,
+    METADATA_PATH
+)
 
-
+print("Class distribution:", Counter(train_y))
 
 
 X_train_texts, X_test_texts, y_train, y_test = train_test_split(
@@ -54,8 +63,9 @@ X_train_texts, X_test_texts, y_train, y_test = train_test_split(
 
 vectorizer = TfidfVectorizer(
     lowercase=True,
-    ngram_range=(1, 2),
-    min_df=1
+    ngram_range=(1, 1),
+    min_df=2,
+    max_features=50_000
 )
 
 X_train = vectorizer.fit_transform(X_train_texts)
@@ -66,5 +76,17 @@ clf = LogisticRegression(max_iter=1000)
 clf.fit(X_train, y_train)
 
 y_pred = clf.predict(X_test)
+print("Confusion matrix:")
+print(confusion_matrix(
+    y_test,
+    y_pred,
+    labels=[1600, 1700, 1800, 1900]
+))
 
-print(classification_report(y_test, y_pred))
+print(
+    classification_report(
+        y_test,
+        y_pred,
+        zero_division=0
+    )
+)

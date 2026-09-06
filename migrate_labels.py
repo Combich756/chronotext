@@ -44,5 +44,15 @@ for file_path in sorted(DATA_DIR.glob("*.txt")):
     })
 
 
+with METADATA_PATH.open("w", encoding="utf-8", newline="") as file:
+    writer = csv.DictWriter(
+        file,
+        fieldnames=["filename", "label"]
+    )
+
+    writer.writeheader()
+    writer.writerows(rows)
+
+
 print(f"Created: {METADATA_PATH}")
 print(f"Number of texts: {len(rows)}")
